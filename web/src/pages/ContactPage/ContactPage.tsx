@@ -1,5 +1,15 @@
 import { MetaTags, useMutation } from '@redwoodjs/web'
-import { FieldError, Form, Label, TextField, TextAreaField, Submit, SubmitHandler } from '@redwoodjs/forms'
+import { toast, Toaster } from '@redwoodjs/web/toast'
+import {
+  FieldError,
+  Form,
+  Label,
+  TextField,
+  TextAreaField,
+  Submit,
+  SubmitHandler,
+} from '@redwoodjs/forms'
+
 import {
   CreateContactMutation,
   CreateContactMutationVariables,
@@ -14,16 +24,20 @@ const CREATE_CONTACT = gql`
 `
 
 interface FormValues {
-  name: string,
-  email: string,
+  name: string
+  email: string
   message: string
 }
 
 const ContactPage = () => {
-  const [create] = useMutation<
+  const [create, { loading, error }] = useMutation<
     CreateContactMutation,
     CreateContactMutationVariables
-  >(CREATE_CONTACT)
+  >(CREATE_CONTACT, {
+    onCompleted: () => {
+      toast.success('Thank you for your submission!')
+    },
+  })
 
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     create({ variables: { input: data } })
@@ -33,6 +47,7 @@ const ContactPage = () => {
     <>
       <MetaTags title="Contact" description="Contact page" />
 
+      <Toaster />
       <Form onSubmit={onSubmit} config={{ mode: 'onBlur' }}>
         <Label name="name" errorClassName="error">
           Name
@@ -52,7 +67,7 @@ const ContactPage = () => {
           validation={{
             required: true,
             pattern: {
-              value: /\S+@\S+\.\S+/,
+              value: /^[^@]+@[^.]+\..+$/,
               message: 'Please enter a valid email address',
             },
           }}
@@ -70,7 +85,7 @@ const ContactPage = () => {
         />
         <FieldError name="message" className="error" />
 
-        <Submit>Save</Submit>
+        <Submit disabled={loading}>Save</Submit>
       </Form>
     </>
   )
